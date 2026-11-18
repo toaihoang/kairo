@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore Kairo.slnx
+
+      - name: Build
+        run: dotnet build Kairo.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Kairo.slnx --configuration Release --no-build
+
+      # Fails on any trim or AOT warning, so the libraries stay reflection-free.
+      - name: Publish AOT sample
+        run: dotnet publish samples/Kairo.Samples.MinimalApi/Kairo.Samples.MinimalApi.csproj --configuration Release --runtime linux-x64

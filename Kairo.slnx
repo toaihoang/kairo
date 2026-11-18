@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/Kairo.Samples.MinimalApi/Kairo.Samples.MinimalApi.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Kairo.Abstractions/Kairo.Abstractions.csproj" />
+    <Project Path="src/Kairo.Core/Kairo.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Kairo.Core.Tests/Kairo.Core.Tests.csproj" />
+  </Folder>
+</Solution>
