@@ -27,6 +27,19 @@ jobs:
       - name: Test
         run: dotnet test Kairo.slnx --configuration Release --no-build
 
-      # Fails on any trim or AOT warning, so the libraries stay reflection-free.
+      # -warnaserror fails the build on any trim or AOT warning, so the libraries stay reflection-free.
       - name: Publish AOT sample
-        run: dotnet publish samples/Kairo.Samples.MinimalApi/Kairo.Samples.MinimalApi.csproj --configuration Release --runtime linux-x64
+        run: >
+          dotnet publish samples/Kairo.Samples.MinimalApi/Kairo.Samples.MinimalApi.csproj
+          --configuration Release --runtime linux-x64 --output aot -warnaserror
+
+      # Runs the native binary: a payload job fails once, is retried, and must succeed on attempt 2.
+      - name: Smoke test AOT sample
+        run: |
+          ./aot/Kairo.Samples.MinimalApi --urls http://localhost:5000 &
+          for i in $(seq 1 30); do curl -sf http://localhost:5000/ > /dev/null && break; sleep 1; done
+          job_id=$(curl -sf -X POST "http://localhost:5000/welcome?email=retry@example.com" | awk '{print $3}')
+          sleep 5
+          result=$(curl -sf "http://localhost:5000/jobs/$job_id")
+          echo "$result"
+          echo "$result" | grep -q "Succeeded, attempt 2"

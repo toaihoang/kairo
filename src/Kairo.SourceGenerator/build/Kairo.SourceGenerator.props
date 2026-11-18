@@ -1,0 +1,9 @@
+<Project>
+
+  <!-- Lets the Kairo analyzers read these MSBuild properties (build_property.*). -->
+  <ItemGroup>
+    <CompilerVisibleProperty Include="PublishAot" />
+    <CompilerVisibleProperty Include="JsonSerializerIsReflectionEnabledByDefault" />
+  </ItemGroup>
+
+</Project>

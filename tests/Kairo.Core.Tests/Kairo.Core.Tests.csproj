@@ -4,6 +4,9 @@
     <ProjectReference Include="..\..\src\Kairo.Core\Kairo.Core.csproj" />
     <ProjectReference Include="..\..\src\Kairo.Storage.InMemory\Kairo.Storage.InMemory.csproj" />
     <ProjectReference Include="..\..\src\Kairo.Testing\Kairo.Testing.csproj" />
+
+    <!-- Runs the source generator on this project, for the GeneratedJobRegistrationTests. -->
+    <ProjectReference Include="..\..\src\Kairo.SourceGenerator\Kairo.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

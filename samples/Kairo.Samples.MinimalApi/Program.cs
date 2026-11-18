@@ -7,6 +7,11 @@ WebApplicationBuilder builder = WebApplication.CreateSlimBuilder(args);
 builder.Services.AddKairo(builder.Configuration.GetSection(KairoOptions.SectionName), kairo => kairo
     .UseInMemoryStorage()
     .AddJsonTypeInfoResolver(SampleJsonContext.Default)
+
+    // Jobs marked with [Job] (HeartbeatJob). Call it before AddRecurringJob for those jobs.
+    .AddKairoJobs()
+
+    // A job registered in code, because it needs options the attribute cannot express (Backoff).
     .AddJob<SendWelcomeEmailJob, WelcomeEmail>(configure: options =>
     {
         options.MaxAttempts = 3;

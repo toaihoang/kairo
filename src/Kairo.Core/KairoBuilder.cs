@@ -58,8 +58,40 @@ public sealed class KairoBuilder
     }
 
     /// <summary>
+    /// Registers a job type that is created by <paramref name="factory"/> instead of by reflection.
+    /// The Kairo source generator emits these calls for classes marked with <see cref="JobAttribute"/>.
+    /// </summary>
+    public KairoBuilder AddJob<TJob>(
+        string name,
+        Func<IServiceProvider, TJob> factory,
+        Action<JobOptions>? configure = null)
+        where TJob : class, IJob
+    {
+        ArgumentNullException.ThrowIfNull(factory);
+        RegisterJob<TJob>(name, configure, InvokeJob<TJob>);
+        Services.TryAddScoped(factory);
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a job type with a payload that is created by <paramref name="factory"/> instead of by reflection.
+    /// The Kairo source generator emits these calls for classes marked with <see cref="JobAttribute"/>.
+    /// </summary>
+    public KairoBuilder AddJob<TJob, TPayload>(
+        string name,
+        Func<IServiceProvider, TJob> factory,
+        Action<JobOptions>? configure = null)
+        where TJob : class, IJob<TPayload>
+    {
+        ArgumentNullException.ThrowIfNull(factory);
+        RegisterJob<TJob>(name, configure, InvokeJobWithPayload<TJob, TPayload>);
+        Services.TryAddScoped(factory);
+        return this;
+    }
+
+    /// <summary>
     /// Runs <typeparamref name="TJob"/> on a schedule. The job type is registered with default
-    /// options if <see cref="AddJob{TJob}"/> was not called for it.
+    /// options if <see cref="AddJob{TJob}(string?, Action{JobOptions}?)"/> was not called for it.
     /// </summary>
     /// <param name="name">A unique, stable name for the recurring job.</param>
     /// <param name="schedule">For example <c>s =&gt; s.DailyAt(2, 30).InTimeZone("Asia/Ho_Chi_Minh")</c>.</param>
@@ -155,10 +187,19 @@ public sealed class KairoBuilder
         return null;
     }
 
+    /// <summary>Registers the job and lets dependency injection create it from its constructor.</summary>
     private void AddJobCore<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TJob>(
         string? name,
         Action<JobOptions>? configure,
         JobInvoker invoker)
+        where TJob : class
+    {
+        RegisterJob<TJob>(name, configure, invoker);
+        Services.TryAddScoped<TJob>();
+    }
+
+    /// <summary>Adds the job to the registry. The caller registers how the job is created.</summary>
+    private void RegisterJob<TJob>(string? name, Action<JobOptions>? configure, JobInvoker invoker)
         where TJob : class
     {
         string jobName = name ?? typeof(TJob).Name;
@@ -184,7 +225,6 @@ public sealed class KairoBuilder
         ValidateJobOptions(jobName, options);
 
         _jobs.Add(jobName, new JobDescriptor(jobName, typeof(TJob), options, invoker));
-        Services.TryAddScoped<TJob>();
     }
 
     private static void ValidateJobOptions(string jobName, JobOptions options)

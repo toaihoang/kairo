@@ -1,7 +1,7 @@
 namespace Kairo;
 
 /// <summary>
-/// Settings for one job type, given when the job is registered with <see cref="KairoBuilder.AddJob{TJob}"/>.
+/// Settings for one job type, given when the job is registered with <see cref="KairoBuilder.AddJob{TJob}(string?, Action{JobOptions}?)"/>.
 /// </summary>
 public sealed class JobOptions
 {

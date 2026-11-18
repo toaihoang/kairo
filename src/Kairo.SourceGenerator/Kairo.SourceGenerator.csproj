@@ -1,0 +1,42 @@
+<!--
+  TreatAsLocalProperty: publish flags passed on the command line (dotnet publish -p:PublishAot=true)
+  reach every referenced project, but a netstandard2.0 generator cannot be trimmed or compiled ahead of time.
+-->
+<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PublishAot;PublishTrimmed;IsAotCompatible">
+
+  <PropertyGroup>
+    <PublishAot>false</PublishAot>
+    <PublishTrimmed>false</PublishTrimmed>
+
+    <!-- The compiler loads generators and analyzers only from netstandard2.0 assemblies. -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsAotCompatible>false</IsAotCompatible>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+
+    <!-- Shipped in the analyzers folder of the package, not as a library reference. -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="build\Kairo.SourceGenerator.props" Pack="true" PackagePath="build;buildTransitive" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Kairo.SourceGenerator.Tests" />
+  </ItemGroup>
+
+</Project>

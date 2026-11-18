@@ -2,7 +2,7 @@
 
 Kairo is a background job scheduler for .NET 10. Its name comes from the Greek *kairos*, "the right moment".
 
-> Status: **early development**. Phase 1 is done: the core engine with in-memory storage. Durable storage providers come next.
+> Status: **early development**. Done: the core engine with in-memory storage (phase 1), and the source generator with Native AOT support (phase 2). Durable storage providers come next.
 
 ## Quick start
 ```csharp
@@ -28,14 +28,53 @@ await jobs.ScheduleAsync<SendEmailJob, Email>(new Email("a@b.c"), TimeSpan.FromM
 A job is a class from dependency injection; a new scope is created for every run:
 
 ```csharp
-public sealed class SendEmailJob(IMailer mailer) : IJob<Email>
+public sealed class SendEmailJob : IJob<Email>
 {
-    public Task ExecuteAsync(Email email, JobContext context, CancellationToken cancellationToken) =>
-        mailer.SendAsync(email, cancellationToken);
+    private readonly IMailer _mailer;
+
+    public SendEmailJob(IMailer mailer)
+    {
+        _mailer = mailer;
+    }
+
+    public Task ExecuteAsync(Email email, JobContext context, CancellationToken cancellationToken)
+    {
+        return _mailer.SendAsync(email, cancellationToken);
+    }
 }
 ```
 
 Delivery is at-least-once: after a crash, a job can run again, so make jobs idempotent.
+
+## Registering jobs with `[Job]`
+Reference `Kairo.SourceGenerator` and mark job classes with `[Job]`. The generator writes an `AddKairoJobs()` method that registers all of them, and creates each job by calling its constructor directly, with no reflection:
+
+```csharp
+[Job("send-email", Queue = "emails", MaxAttempts = 3, TimeoutSeconds = 30)]
+public sealed class SendEmailJob : IJob<Email> { ... }
+
+services.AddKairo(kairo => kairo.UseInMemoryStorage().AddKairoJobs());
+```
+
+Use `AddJob<...>(configure: ...)` instead for options the attribute cannot express, such as `Backoff` or `RetryWhen`.
+
+The package also checks job classes at compile time:
+
+| Rule | Severity | Meaning |
+|---|---|---|
+| KAIRO001 | Error | The `[Job]` class is abstract, generic, private, or does not implement exactly one of `IJob` and `IJob<T>` |
+| KAIRO002 | Error | Two jobs have the same name |
+| KAIRO003 | Warning | Under Native AOT, a payload type has no `[JsonSerializable]` in any `JsonSerializerContext` |
+| KAIRO004 | Error | The `[Job]` class does not have exactly one public constructor |
+| KAIRO005 | Error | A constructor parameter cannot come from dependency injection (`ref`/`out`, `params`, a non-null default) |
+| KAIRO006 | Error | A `[Job]` value is negative |
+
+## Native AOT
+Kairo's libraries are trim- and AOT-compatible. For an AOT app:
+1. Put every payload type in a `JsonSerializerContext` and register it with `AddJsonTypeInfoResolver(...)`. KAIRO003 reports the ones you missed.
+2. Prefer `[Job]` + `AddKairoJobs()`, so jobs are created without reflection.
+
+CI publishes the sample with Native AOT, fails on any trim or AOT warning, and runs the native binary.
 
 ## Testing your jobs
 `Kairo.Testing` runs jobs one by one on a fake clock, without a hosted server:

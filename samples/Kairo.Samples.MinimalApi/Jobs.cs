@@ -40,6 +40,8 @@ internal sealed partial class SendWelcomeEmailJob : IJob<WelcomeEmail>
     private partial void LogSent(string address, int attempt);
 }
 
+/// <summary>Registered by the source generator: see AddKairoJobs() in Program.cs.</summary>
+[Job("heartbeat")]
 internal sealed partial class HeartbeatJob : IJob
 {
     private readonly ILogger<HeartbeatJob> _logger;
