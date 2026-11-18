@@ -2,7 +2,49 @@
 
 Kairo is a background job scheduler for .NET 10. Its name comes from the Greek *kairos*, "the right moment".
 
-> Status: **early development**. The repository is set up, but no features exist yet.
+> Status: **early development**. Phase 1 is done: the core engine with in-memory storage. Durable storage providers come next.
+
+## Quick start
+```csharp
+builder.Services.AddKairo(builder.Configuration.GetSection("Kairo"), kairo => kairo
+    .UseInMemoryStorage()
+    .AddJsonTypeInfoResolver(AppJsonContext.Default)          // payload metadata, required for Native AOT
+    .AddJob<SendEmailJob, Email>(configure: options =>
+    {
+        options.MaxAttempts = 3;
+        options.Backoff = Backoff.Exponential(TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(10));
+        options.Timeout = TimeSpan.FromMinutes(1);
+    })
+    .AddRecurringJob<CleanupJob>("cleanup", schedule => schedule
+        .DailyAt(2, 30)
+        .InTimeZone("Asia/Ho_Chi_Minh")
+        .PreventOverlap()));
+
+// Anywhere with DI:
+await jobs.EnqueueAsync<SendEmailJob, Email>(new Email("a@b.c"));
+await jobs.ScheduleAsync<SendEmailJob, Email>(new Email("a@b.c"), TimeSpan.FromMinutes(5));
+```
+
+A job is a class from dependency injection; a new scope is created for every run:
+
+```csharp
+public sealed class SendEmailJob(IMailer mailer) : IJob<Email>
+{
+    public Task ExecuteAsync(Email email, JobContext context, CancellationToken cancellationToken) =>
+        mailer.SendAsync(email, cancellationToken);
+}
+```
+
+Delivery is at-least-once: after a crash, a job can run again, so make jobs idempotent.
+
+## Testing your jobs
+`Kairo.Testing` runs jobs one by one on a fake clock, without a hosted server:
+
+```csharp
+await using KairoTestHost host = KairoTestHost.Create(kairo => kairo.AddJob<SendEmailJob, Email>());
+await host.Client.ScheduleAsync<SendEmailJob, Email>(email, TimeSpan.FromMinutes(5));
+int runs = await host.AdvanceAsync(TimeSpan.FromMinutes(5));   // the job runs here
+```
 
 ## Goals
 - **Durable jobs:** fire-and-forget, delayed, recurring (cron or fluent API) and continuation jobs. Jobs get retries and a dead-letter state.

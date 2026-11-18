@@ -8,6 +8,8 @@ public class BuildSettingsTests
     [Theory]
     [InlineData("Kairo.Abstractions")]
     [InlineData("Kairo.Core")]
+    [InlineData("Kairo.Storage.InMemory")]
+    [InlineData("Kairo.Testing")]
     public void LibraryIsMarkedTrimmable(string assemblyName)
     {
         Assembly assembly = Assembly.Load(assemblyName);

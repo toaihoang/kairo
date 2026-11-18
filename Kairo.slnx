@@ -5,6 +5,8 @@
   <Folder Name="/src/">
     <Project Path="src/Kairo.Abstractions/Kairo.Abstractions.csproj" />
     <Project Path="src/Kairo.Core/Kairo.Core.csproj" />
+    <Project Path="src/Kairo.Storage.InMemory/Kairo.Storage.InMemory.csproj" />
+    <Project Path="src/Kairo.Testing/Kairo.Testing.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Kairo.Core.Tests/Kairo.Core.Tests.csproj" />

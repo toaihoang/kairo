@@ -115,13 +115,24 @@ dotnet_style_readonly_field = true:warning
 # IDE0011: braces may be omitted only for single-line statements
 csharp_prefer_braces = when_multiline:suggestion
 
+# Readability first: the IDE must not suggest compact syntax that is harder to read.
+# Prefer explicit "new List<T>()", ordinary constructors, if/else, "list[list.Count - 1]".
+dotnet_style_prefer_collection_expression = never:suggestion
+csharp_style_implicit_object_creation_when_type_is_apparent = false:suggestion
+csharp_style_prefer_primary_constructors = false:suggestion
+csharp_style_prefer_switch_expression = false:suggestion
+csharp_style_prefer_index_operator = false:suggestion
+csharp_style_prefer_range_operator = false:suggestion
+csharp_style_throw_expression = false:suggestion
+csharp_style_deconstructed_variable_declaration = false:suggestion
+csharp_style_conditional_delegate_call = false:suggestion
+dotnet_style_null_propagation = false:suggestion
+dotnet_style_coalesce_expression = true:silent
+
 # Expression preferences
 dotnet_style_object_initializer = true:suggestion
 dotnet_style_collection_initializer = true:suggestion
-dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
 dotnet_style_explicit_tuple_names = true:suggestion
-dotnet_style_coalesce_expression = true:suggestion
-dotnet_style_null_propagation = true:suggestion
 dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
 dotnet_style_prefer_inferred_tuple_names = true:suggestion
 dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
@@ -136,14 +147,10 @@ csharp_prefer_simple_using_statement = true:suggestion
 csharp_prefer_system_threading_lock = true:suggestion
 csharp_style_prefer_method_group_conversion = true:silent
 csharp_style_prefer_top_level_statements = true:silent
-csharp_style_prefer_primary_constructors = true:suggestion
-csharp_style_prefer_switch_expression = true:suggestion
-csharp_style_prefer_pattern_matching = true:suggestion
+csharp_style_prefer_pattern_matching = false:silent
 csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
 csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
 csharp_style_inlined_variable_declaration = true:suggestion
-csharp_style_throw_expression = true:suggestion
-csharp_style_conditional_delegate_call = true:suggestion
 csharp_style_pattern_local_over_anonymous_function = false:none
 
 # Expression-bodied members: allowed, not required
@@ -206,3 +213,6 @@ dotnet_naming_style.type_parameter_style.capitalization = pascal_case
 [tests/**.cs]
 # CA1707: test names may use underscores (Method_State_Result)
 dotnet_diagnostic.CA1707.severity = none
+
+# CA1861: inline expected arrays in assertions read better than static fields; speed does not matter here
+dotnet_diagnostic.CA1861.severity = none
